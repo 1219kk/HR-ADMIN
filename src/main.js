@@ -15,7 +15,7 @@ import router from './router' // 路由
 
 import '@/icons' // icon svg
 import '@/permission' // permission control 权限控制
-
+// import '@/directives'
 /**
  * If you don't want to use mock-server
  * you want to use MockJs for mock api
@@ -36,6 +36,13 @@ Vue.use(ElementUI)
 
 // 控制台生产提示
 Vue.config.productionTip = false
+
+// 批量导入自定义指令 作用可以简化指令的写法
+// 可以把所有的按需导出全部导入到一个对象 对象的名字叫directives
+import * as obj from '@/directives'
+Object.keys(obj).forEach(item => {
+  Vue.directive(item, obj[item])
+})
 
 // 初始化
 new Vue({

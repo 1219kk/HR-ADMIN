@@ -151,7 +151,10 @@
       }
     }
   }
-
+  // zuoce
+  .sidebar-container {
+    background: -webkit-linear-gradient(bottom, #42aec1, #42aec1);
+}
   .el-menu--collapse .el-menu .el-submenu {
     min-width: $sideBarWidth !important;
   }
@@ -222,5 +225,7 @@
       background: #99a9bf;
       border-radius: 20px;
     }
+
   }
+
 }
