@@ -1,17 +1,26 @@
 <template>
   <div class="dashboard-container">
     <div class="app-container">
-      <el-card>
+      <el-card
+        v-loading="isLoading"
+        style="min-height: 700px"
+        element-loading-text="拼命加载中"
+        element-loading-spinner="el-icon-loading"
+        element-loading-background="rgba(0, 0, 0, 0.8)"
+      >
         <el-tabs>
           <el-tab-pane label="用户管理">
             <!-- 用了一个行列布局 -->
-            <TreeItem :node="titleObj"></TreeItem>
+            <TreeItem
+              :node="titleObj"
+              @delDepartment="getDepartmentsList"
+            ></TreeItem>
             <el-tree :data="data" default-expand-all>
               <!-- 使用 scoped slot 会传入两个参数node和data，分别表示当前节点的 Node 对象和当前节点的数据 -->
               <template v-slot="scoped">
                 <TreeItem
                   :node="scoped.node"
-                  @delDeparment="getDepartmentsList"
+                  @delDepartment="getDepartmentsList"
                 ></TreeItem>
               </template>
             </el-tree>
@@ -37,7 +46,8 @@ export default {
           label: ''
         }]
       }],
-      titleObj: {}
+      titleObj: {},
+      isLoading: true
     }
   },
   computed: {},
@@ -61,6 +71,7 @@ export default {
       }
       this.data = transferListTree(res.depts, '')
       this.titleObj = res.depts[0]
+      this.isLoading = false
       // console.log(res1)
       // this.data = res1
     }
