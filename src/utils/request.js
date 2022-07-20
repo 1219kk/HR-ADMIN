@@ -5,7 +5,7 @@ import { getTime } from '@/utils/auth'
 import router from '@/router'
 const request = axios.create({
   baseURL: process.env.VUE_APP_BASE_API,
-  timeout: 5000
+  timeout: 3000
 })
 // 添加请求拦截器
 // 主动处理token

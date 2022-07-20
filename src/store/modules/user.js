@@ -27,19 +27,6 @@ const actions = {
     context.commit('setToken', res)
     setToken(res)
     setTime(Date.now())
-    // try {
-    //   const res = await Login(data)
-    //   context.commit('setToken', res)
-    // if (res.data.success) {
-    //   context.commit('setToken', res.data.data)
-    // } else {
-    //   return Promise.reject(new Error(res.data.message))
-    // }
-    //     console.log(res)
-    //   } catch (err) {
-    //     console.log(err)
-    //     return Promise.reject(err)
-    //   }
   },
   async getInfo (context) {
     const res = await getInfo(context)
