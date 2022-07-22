@@ -1,6 +1,13 @@
 <template>
   <div>
-    <el-button type="primary" size="mini" @click="roleDialogVisible = true"
+    <el-button
+      type="primary"
+      size="mini"
+      @click="
+        roleDialogVisible = true;
+        isEdit = false;
+        form = {};
+      "
       >新增角色</el-button
     >
     <el-table :data="roleList" border>
@@ -21,7 +28,9 @@
           <el-button type="text" @click="showRightDialog(scope.row.id)"
             >分配权限</el-button
           >
-          <el-button type="text">修改</el-button>
+          <el-button type="text" @click="showRoleDialog(scope.row)"
+            >修改</el-button
+          >
           <el-button type="text" @click="del(scope.row.id)">删除</el-button>
         </template>
       </el-table-column>
@@ -58,8 +67,18 @@
       </template>
     </el-dialog>
     <!-- 新增修改 -->
-    <el-dialog title="新增" :visible.sync="roleDialogVisible" close="reset">
-      <el-form ref="myForm" label-width="80px" :rules="rules" :model="form">
+    <el-dialog
+      :title="isEdit ? '修改' : '新增'"
+      :visible.sync="roleDialogVisible"
+      close="reset"
+    >
+      <el-form
+        v-if="roleDialogVisible"
+        ref="myForm"
+        label-width="80px"
+        :rules="rules"
+        :model="form"
+      >
         <el-form-item label="角色名称" prop="name">
           <el-input v-model="form.name"></el-input>
         </el-form-item>
@@ -76,7 +95,7 @@
 </template>
 
 <script>
-import { getRoleList, delRole, addRole } from '@/api/setting'
+import { getRoleList, delRole, addRole, editRole } from '@/api/setting'
 import { getPermissions, getPermissionsById, assignPermission } from '@/api/permission'
 import { tranferListToTree } from '@/utils'
 export default {
@@ -104,7 +123,8 @@ export default {
         name: [
           { required: true, message: '角色名称不能为空', trigger: 'blur' }
         ]
-      }
+      },
+      isEdit: false
     }
   },
   computed: {},
@@ -168,15 +188,25 @@ export default {
       // 二次校验
       this.$refs.myForm.validate(async bool => {
         if (!bool) return this.$message.error('表单数据非法')
-        await addRole(this.form)
+        if (this.isEdit) {
+          await editRole(this.form)
+        } else {
+          await addRole(this.form)
+        }
         // 重置
         this.getRoleList()
         // console.log('发送ajax')
         this.rightVisible = false // 弹出层关闭
+        this.roleDialogVisible = false
       })
     },
     reset () {
       this.$refs.myForm.resetFields()
+    },
+    showRoleDialog (row) {
+      this.isEdit = true
+      this.roleDialogVisible = true
+      // this.form = { ...row } // 浅拷贝
     }
   }
 }

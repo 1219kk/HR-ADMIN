@@ -44,6 +44,8 @@ Object.keys(obj).forEach(item => {
   Vue.directive(item, obj[item])
 })
 
+import components from './components'
+Vue.use(components)
 // 初始化
 new Vue({
   el: '#app',
