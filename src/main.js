@@ -44,8 +44,16 @@ Object.keys(obj).forEach(item => {
   Vue.directive(item, obj[item])
 })
 
+// import dayjs from 'dayjs'
+// Vue.filter('datefromat', function (time) {
+//   return dayjs(time).format('YYYY-MM-DD')
+// })
 import components from './components'
 Vue.use(components)
+import * as filter from '@/filters'
+Object.keys(filter).forEach(item => {
+  Vue.filter(item, filter[item])
+})
 // 初始化
 new Vue({
   el: '#app',
