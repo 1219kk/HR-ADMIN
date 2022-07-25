@@ -158,6 +158,18 @@ const asyncRoutes = [
       name: 'Import',
       component: () => import('@/views/import/index')
     }]
+  },
+  {
+    path: '/employee/detail/:id',
+    component: Layout,
+    hidden: true,
+    children: [{
+      path: '',
+      name: 'EmployeeDetail',
+      component: () => import('@/views/employees/detail'),
+      // 第二种只写id 需要也传props id
+      props: true
+    }]
   }
 
 ]

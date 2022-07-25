@@ -17,7 +17,12 @@
             @click="$router.push('./import?type=user')"
             >excel导入</el-button
           >
-          <el-button type="primary" size="mini">新增员工</el-button>
+          <el-button
+            type="primary"
+            size="mini"
+            @click="addEmployeeVisible = true"
+            >新增员工</el-button
+          >
         </template>
       </PageTool>
 
@@ -31,7 +36,11 @@
           ></el-table-column>
           <el-table-column label="头像" prop="staffPhoto">
             <template v-slot="scope">
-              <img :src="scope.row.staffPhoto" style="width: 40px" />
+              <img
+                :src="scope.row.staffPhoto"
+                style="width: 40px"
+                @click="showQrDialog(scope.row.staffPhoto)"
+              />
             </template>
           </el-table-column>
           <el-table-column
@@ -65,37 +74,179 @@
             </template>
           </el-table-column>
           <el-table-column label="操作" width="300px">
-            <template>
-              <el-button type="text">查看</el-button>
+            <template v-slot="scope">
+              <el-button
+                type="text"
+                @click="$router.push('/employee/detail/' + scope.row.id)"
+                >查看</el-button
+              >
               <el-button type="text">转正</el-button>
               <el-button type="text">调岗</el-button>
               <el-button type="text">离职</el-button>
-              <el-button type="text">角色</el-button>
+              <el-button type="text" @click="showRoleDialog(scope.row.id)"
+                >角色</el-button
+              >
               <el-button type="text">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
       </el-card>
     </div>
+    <el-dialog title="分配角色" :visible.sync="roleVisible">
+      <el-checkbox-group v-model="checkList">
+        <el-checkbox v-for="item in roleList" :key="item.id" :label="item.id">{{
+          item.name
+        }}</el-checkbox>
+      </el-checkbox-group>
+      <template #footer>
+        <el-button type="primary" @click="assignRoles">确定</el-button>
+        <el-button @click="roleVisible = false">取消</el-button>
+      </template>
+    </el-dialog>
+    <!-- 新增员工 -->
+    <el-dialog
+      title="新增员工"
+      :visible.sync="addEmployeeVisible"
+      @close="handelClose"
+    >
+      <el-form
+        ref="employeeRef"
+        label-width="80px"
+        :model="employeeForm"
+        :rules="employeeFormRules"
+      >
+        <!-- 1 -->
+        <el-form-item label="姓名" prop="username">
+          <el-input v-model="employeeForm.username"></el-input>
+        </el-form-item>
+        <!-- 2 -->
+        <el-form-item label="手机号" prop="mobile">
+          <el-input v-model="employeeForm.mobile"></el-input>
+        </el-form-item>
+        <!-- 3 -->
+        <el-form-item label="入职时间" prop="timeOfEntry">
+          <el-date-picker
+            v-model="employeeForm.timeOfEntry"
+            type="date"
+            placeholder="选择日期"
+            clearable
+            style="width: 100%"
+          >
+          </el-date-picker>
+        </el-form-item>
+        <!-- 4 -->
+        <el-form-item label="聘用形式" prop="formOfEmployment">
+          <!-- <el-input ></el-input> -->
+          <el-select
+            v-model="employeeForm.formOfEmployment"
+            placeholder="请选择"
+          >
+            <el-option
+              v-for="item in hireType"
+              :key="item.id"
+              :label="item.value"
+              :value="item.id"
+            >
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <!-- 5 -->
+        <el-form-item label="工号" prop="workNumber">
+          <el-input v-model="employeeForm.workNumber"></el-input>
+        </el-form-item>
+        <!-- 6 -->
+        <el-form-item label="组织名称" prop="departmentName">
+          <el-input
+            v-model="employeeForm.departmentName"
+            @focus="showDepartment"
+          ></el-input>
+          <el-tree
+            v-if="deparmentList.length > 0"
+            :data="deparmentList"
+            default-expand-all
+            :props="{ label: 'name' }"
+            @node-click="handleNodeClick"
+          >
+          </el-tree>
+        </el-form-item>
+        <!-- 7 -->
+        <el-form-item label="转正时间" prop="correctionTime">
+          <el-date-picker
+            v-model="employeeForm.correctionTime"
+            type="date"
+            placeholder="选择日期"
+            clearable
+            style="width: 100%"
+          >
+          </el-date-picker>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button type="primary">确定</el-button>
+        <el-button @click="addEmployeeVisible = false">取消</el-button>
+      </template>
+    </el-dialog>
+    <!-- 图片二维码 -->
+    <el-dialog title="图片二维码" :visible.sync="qrcodeVisible">
+      <el-row type="flex" justify="center">
+        <canvas ref="canvas"></canvas>
+      </el-row>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { getEmployee } from '@/api/employee'
+import QRCode from 'qrcode'
+import { getDepartmentsList } from '@/api/departments'
+import { validMobile } from '@/utils/validate'
+import { getRoleList } from '@/api/setting'
+import { getEmployee, assignRoles } from '@/api/employee'
+import { getUserDetailById } from '@/api/user'
 import employees from '@/constant/employees'
 export default {
   filters: {
-
   },
   components: {},
   data () {
+    const validateMobile = (rule, value, callback) => {
+      validMobile(value) ? callback() : callback(new Error('手机号格式不对'))
+    }
     return {
       paramsObj: {
         page: 1,
         size: 5
       },
       employee: [],
-      total: null
+      total: null,
+      roleVisible: false,
+      checkList: [],
+      roleList: [],
+      id: null,
+      addEmployeeVisible: false,
+      employeeForm: {
+        username: '',
+        mobile: '',
+        formOfEmployment: '',
+        workNumber: '',
+        departmentName: '',
+        timeOfEntry: '',
+        correctionTime: ''
+      },
+      qrcodeVisible: false,
+      employeeFormRules: {
+        mobile: [
+          { required: true, message: '必填', trigger: 'blur' },
+          { validator: validateMobile, trigger: 'blur' }
+        ],
+        timeOfEntry: [
+          { required: true, message: '必填', trigger: 'blur' }
+        ],
+        workNumber: [
+          { required: true, message: '必填', trigger: 'blur' }
+        ]
+      },
+      hireType: employees.hireType,
+      deparmentList: []
     }
   },
   computed: {},
@@ -178,6 +329,59 @@ export default {
           autoWidth: true, // 非必填
           bookType: 'xlsx', // 非必填
           merges // 设置合并规则
+        })
+      })
+    },
+    async showRoleDialog (id) {
+      this.id = id
+      const { rows } = await getRoleList({ page: 1, size: 9999 })
+      console.log(rows)
+      const { roleIds } = await getUserDetailById(id)
+      this.roleVisible = true
+      this.roleList = rows
+      this.checkList = roleIds
+    },
+    async assignRoles () {
+      const res = await assignRoles({
+        id: this.id,
+        roleIds: this.checkList
+      })
+      console.log(res)
+      this.roleVisible = false
+    },
+    handelClose () {
+      this.$refs.employeeRef.resetFields()
+      // 组织名称下拉清空
+      this.deparmentList = []
+    },
+    async showDepartment () {
+      const res = await getDepartmentsList()
+      // 我们的数据不能直接使用，而是先加工处理一下才能使用 递归在写的时候慢慢就意识到了 层次不确定
+      function tranferListToTree (list, pid) {
+        var list1 = []
+        list.forEach(item => {
+          if (item.pid === pid) {
+            list1.push(item)
+            item.children = tranferListToTree(list, item.id)
+          }
+        })
+        return list1
+      }
+      this.deparmentList = tranferListToTree(res.depts, '')
+    },
+    handleNodeClick (obj) {
+      // 当前节点name赋值给表单中的部门名字
+      this.employeeForm.departmentName = obj.name
+      // 关闭tree
+      this.deparmentList = []
+    },
+    // 点击头像弹出二维码
+    showQrDialog (src) {
+      this.qrcodeVisible = true
+      this.$nextTick(() => {
+        QRCode.toCanvas(this.$refs.canvas, 'src', function (error) {
+          if (error) console.error(error)
+          console.log('success!')
         })
       })
     }
