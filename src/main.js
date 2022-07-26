@@ -54,6 +54,10 @@ import * as filter from '@/filters'
 Object.keys(filter).forEach(item => {
   Vue.filter(item, filter[item])
 })
+
+import Print from 'vue-print-nb'
+// Global instruction
+Vue.use(Print)
 // 初始化
 new Vue({
   el: '#app',
